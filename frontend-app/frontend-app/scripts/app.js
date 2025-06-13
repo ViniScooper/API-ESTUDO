@@ -15,6 +15,8 @@ async function fetchUsers() {
     }
 }
 
+let editingUserId = null;
+
 // Exibir usuários na lista
 function displayUsers(users) {
     const userList = document.getElementById('userList');
@@ -49,19 +51,28 @@ function displayUsers(users) {
         `;
         userList.appendChild(li);
 
-        // Exemplo: evento de remover (apenas visual)
+        // Botão deletar
         const deleteBtn = li.querySelector('.delete-btn');
-        deleteBtn.addEventListener('click', function() {
-            li.remove();
-            if (userList.children.length === 0) {
-                userList.innerHTML = `
-                    <li class="empty-state">
-                        <i class="fas fa-user-slash"></i>
-                        <p>Nenhum usuário cadastrado</p>
-                    </li>
-                `;
+        deleteBtn.addEventListener('click', async function() {
+            if (confirm('Tem certeza que deseja deletar este usuário?')) {
+                try {
+                    const response = await fetch(`${apiUrl}/${user.id}`, { method: 'DELETE' });
+                    if (response.ok) {
+                        fetchUsers();
+                        showNotification('Usuário deletado com sucesso!', 'success');
+                    } else {
+                        showNotification('Erro ao deletar usuário!', 'error');
+                    }
+                } catch (error) {
+                    showNotification('Erro ao deletar usuário!', 'error');
+                }
             }
-            showNotification('Usuário removido da lista!', 'success');
+        });
+
+        // Botão editar
+        const editBtn = li.querySelector('.edit-btn');
+        editBtn.addEventListener('click', function() {
+            onEditUser(user);
         });
     });
 }
@@ -84,23 +95,50 @@ document.getElementById('userForm').addEventListener('submit', async function (e
     const age = document.getElementById('age').value;
 
     try {
-        const response = await fetch(apiUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, name, age })
-        });
-        if (response.ok) {
-            document.getElementById('userForm').reset();
-            fetchUsers();
-            showNotification('Usuário cadastrado com sucesso!', 'success');
+        if (editingUserId) {
+            // PUT para atualizar usuário
+            const response = await fetch(`${apiUrl}/${editingUserId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, name, age })
+            });
+            if (response.ok) {
+                showNotification('Usuário atualizado com sucesso!', 'success');
+                editingUserId = null;
+                document.querySelector('.submit-btn').innerHTML = '<i class="fas fa-save"></i> Cadastrar Usuário';
+                document.getElementById('userForm').reset();
+                fetchUsers();
+            } else {
+                showNotification('Erro ao atualizar usuário!', 'error');
+            }
         } else {
-            const errorData = await response.json();
-            showNotification('Erro ao cadastrar usuário: ' + (errorData.error || 'Erro desconhecido'), 'error');
+            // POST para criar usuário
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, name, age })
+            });
+            if (response.ok) {
+                showNotification('Usuário cadastrado com sucesso!', 'success');
+                document.getElementById('userForm').reset();
+                fetchUsers();
+            } else {
+                showNotification('Erro ao cadastrar usuário!', 'error');
+            }
         }
     } catch (error) {
-        showNotification('Erro ao cadastrar usuário: ' + error.message, 'error');
+        showNotification('Erro ao salvar usuário!', 'error');
     }
 });
+
+// Ao clicar em editar, preenche o formulário e muda o botão
+function onEditUser(user) {
+    document.getElementById('email').value = user.email;
+    document.getElementById('name').value = user.name;
+    document.getElementById('age').value = user.age;
+    editingUserId = user.id;
+    document.querySelector('.submit-btn').innerHTML = '<i class="fas fa-save"></i> Salvar Alterações';
+}
 
 // Botão "Buscar Usuários"
 document.getElementById('fetchUsersBtn').addEventListener('click', fetchUsers);

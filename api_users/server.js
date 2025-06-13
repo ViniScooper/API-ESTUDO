@@ -122,7 +122,7 @@ app.get('/usuarios', async (req, res) => {
         }
 
 
-        
+
 
         return res.status(200).json(users);
     } catch (error) {
