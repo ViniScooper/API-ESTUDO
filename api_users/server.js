@@ -121,6 +121,9 @@ app.get('/usuarios', async (req, res) => {
             users = await prisma.user.findMany();
         }
 
+
+        
+
         return res.status(200).json(users);
     } catch (error) {
         console.error(error);
