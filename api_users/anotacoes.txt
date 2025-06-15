@@ -65,6 +65,8 @@ para separar informacoes voce usa o "&"
 
 mas usamos isso para opceos normais sem se preucpar com seguraca
 
+users name like '%vini%'
+
 
 TAMBEM TEMOS O
 

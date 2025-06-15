@@ -107,22 +107,23 @@ app.delete('/usuarios/:id', async (req, res) => {
 
 
 app.get('/usuarios', async (req, res) => {
+    const { age, name, email } = req.query;
+
     try {
-        let users = [];
-        // Monta o filtro dinamicamente usando req.query
-        const where = {};
-        if (req.query.name) where.name = req.query.name;
-        if (req.query.email) where.email = req.query.email;
-        if (req.query.age) where.age = Number(req.query.age);
+        // Monta dinamicamente o objeto de filtro
+        const where = {
+            name: name , 
+            age: age ? age : undefined,
+            email: email ? email : undefined,
+        };
 
-        if (Object.keys(where).length) {
-            users = await prisma.user.findMany({ where });
-        } else {
-            users = await prisma.user.findMany();
-        }
+        // Remove campos undefined
+        Object.keys(where).forEach(key => where[key] === undefined && delete where[key]);
 
+        const users = await prisma.user.findMany({
+            where 
 
-
+        });
 
         return res.status(200).json(users);
     } catch (error) {
